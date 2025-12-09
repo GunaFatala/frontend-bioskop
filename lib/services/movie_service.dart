@@ -22,4 +22,23 @@ class MovieService {
       throw Exception('Error: $e');
     }
   }
+
+  // ... import dan class MovieService yang lama ...
+
+  // Tambahkan fungsi ini di dalam class MovieService:
+
+  // Fungsi ambil detail film + jadwalnya
+  Future<Movie> getMovieDetail(int id) async {
+    try {
+      final response = await _dio.get('${ApiConstants.movies}/$id');
+
+      if (response.statusCode == 200) {
+        return Movie.fromJson(response.data);
+      } else {
+        throw Exception('Gagal mengambil detail film');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 }

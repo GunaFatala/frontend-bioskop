@@ -5,7 +5,7 @@ import '../utils/api_constants.dart';
 class AuthService {
   final Dio _dio = Dio();
 
-  // Fungsi Login
+  // --- FUNGSI LOGIN ---
   Future<bool> login(String email, String password) async {
     try {
       final response = await _dio.post(
@@ -13,28 +13,28 @@ class AuthService {
         data: {'email': email, 'password': password},
         options: Options(
           headers: {
-            'Content-Type': 'application/json', // Wajib buat Laravel
+            'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          validateStatus: (status) =>
-              status! < 500, // Biar 401 gak dianggap crash
+          validateStatus: (status) => status! < 500,
         ),
       );
 
       if (response.statusCode == 200) {
-        // Login Sukses!
-        final token = response.data['token'];
+        final data = response.data;
+        final token = data['token'];
 
-        // Simpan Token di HP biar gak login-login terus
+        // Simpan Token & Nama User ke Memori HP
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
 
-        // Simpan juga nama user kalau perlu (opsional)
-        // await prefs.setString('user_name', response.data['user']['name']);
+        // PENTING: Ambil nama dari response backend dan simpan
+        if (data['user'] != null) {
+          await prefs.setString('user_name', data['user']['name']);
+        }
 
         return true;
       } else {
-        // Login Gagal (Password salah / Email gak ada)
         throw Exception(response.data['message'] ?? 'Login Gagal');
       }
     } catch (e) {
@@ -42,13 +42,45 @@ class AuthService {
     }
   }
 
-  // Fungsi Logout
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Hapus semua data login dari HP
+  // --- FUNGSI REGISTER ---
+  Future<bool> register(String name, String email, String password) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.register,
+        data: {'name': name, 'email': email, 'password': password},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          validateStatus: (status) => status! < 500,
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final token = response.data['token'];
+        final prefs = await SharedPreferences.getInstance();
+
+        await prefs.setString('token', token);
+        // Simpan nama langsung dari inputan (karena user baru daftar)
+        await prefs.setString('user_name', name);
+
+        return true;
+      } else {
+        throw Exception(response.data['message'] ?? 'Gagal Mendaftar');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
   }
 
-  // Cek apakah user sudah login sebelumnya
+  // --- FUNGSI LOGOUT ---
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Hapus Token & Nama
+  }
+
+  // --- CEK STATUS LOGIN ---
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey('token');

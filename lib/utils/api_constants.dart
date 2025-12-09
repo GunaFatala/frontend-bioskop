@@ -8,6 +8,7 @@ class ApiConstants {
   static const String register = "$baseUrl/register";
   static const String movies = "$baseUrl/movies";
   static const String bookings = "$baseUrl/bookings";
+  static const String myBookings = "$baseUrl/my-bookings";
 
   // URL untuk gambar dummy
   static const String imageBaseUrl = "https://via.placeholder.com/300";
